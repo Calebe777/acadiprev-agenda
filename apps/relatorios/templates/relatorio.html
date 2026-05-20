@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório Executivo - Agenda Hora a Hora</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 20mm;
+            @top-center { content: "Relatório de Desempenho e Frequência"; font-size: 10pt; color: #666; }
+            @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 9pt; color: #999; }
+        }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.5; font-size: 12pt; }
+        .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid {{ primary_color|default:"#1B3A6B" }}; padding-bottom: 10px; margin-bottom: 20px; }
+        .header img { max-height: 50px; }
+        .header h1 { margin: 0; font-size: 20pt; color: {{ primary_color|default:"#1B3A6B" }}; }
+        .periodo { font-size: 11pt; color: #666; margin-bottom: 30px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 10pt; }
+        th { background-color: {{ primary_color|default:"#1B3A6B" }}; color: #fff; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        .kpi-container { display: flex; gap: 20px; margin-bottom: 30px; }
+        .kpi-box { flex: 1; border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; background: #fafafa; }
+        .kpi-value { font-size: 24pt; font-weight: bold; color: {{ primary_color|default:"#1B3A6B" }}; }
+        .kpi-label { font-size: 10pt; color: #666; text-transform: uppercase; }
+        
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 9pt; font-weight: bold; }
+        .status-concluido { background-color: #d1fae5; color: #065f46; }
+        .status-parcial { background-color: #fef3c7; color: #92400e; }
+        .status-nao_realizado { background-color: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1>{{ tenant_name|default:"Agenda Hora a Hora" }}</h1>
+            <div style="font-size: 14pt; color: #444;">{{ relatorio_titulo }}</div>
+        </div>
+        {% if tenant_logo %}
+        <img src="{{ tenant_logo }}" alt="Logo">
+        {% endif %}
+    </div>
+
+    <div class="periodo">
+        <strong>Período de Análise:</strong> {{ periodo_inicio }} até {{ periodo_fim }} <br>
+        <strong>Gerado em:</strong> {{ gerado_em }}
+    </div>
+
+    <div class="kpi-container">
+        <div class="kpi-box">
+            <div class="kpi-value">{{ total_colaboradores|default:"0" }}</div>
+            <div class="kpi-label">Colaboradores Avaliados</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-value">{{ percentual_conclusao_geral|default:"0" }}%</div>
+            <div class="kpi-label">Conclusão de Blocos</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-value">{{ total_justificativas|default:"0" }}</div>
+            <div class="kpi-label">Justificativas no Período</div>
+        </div>
+    </div>
+
+    <h2>Detalhamento por Colaborador</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Colaborador</th>
+                <th>BU</th>
+                <th>Presenças (Check-ins)</th>
+                <th>Blocos Planejados</th>
+                <th>Concluídos (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for linha in linhas %}
+            <tr>
+                <td><strong>{{ linha.nome }}</strong></td>
+                <td>{{ linha.bu|default:"-" }}</td>
+                <td>{{ linha.checkins }} / {{ linha.dias_uteis }}</td>
+                <td>{{ linha.blocos_total }}</td>
+                <td>
+                    <span class="status-badge {% if linha.pct_conclusao >= 80 %}status-concluido{% elif linha.pct_conclusao >= 50 %}status-parcial{% else %}status-nao_realizado{% endif %}">
+                        {{ linha.pct_conclusao }}%
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 20px;">Nenhum dado encontrado no período.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 50px; font-size: 8pt; text-align: center; color: #aaa;">
+        Este é um documento confidencial gerado via plataforma Agenda Hora a Hora.
+    </div>
+
+</body>
+</html>
