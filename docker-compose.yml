@@ -49,8 +49,6 @@ services:
     volumes:
       - .:/app
       - static_files:/app/staticfiles
-    ports:
-      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
