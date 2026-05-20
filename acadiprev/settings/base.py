@@ -25,11 +25,7 @@ SHARED_APPS = [
 
     # Apps Django padrão (compartilhados)
     'django.contrib.contenttypes',
-    'django.contrib.auth',
-    'django.contrib.sessions',
-    'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.admin',
 
     # Terceiros (compartilhados)
     'rest_framework',
@@ -43,6 +39,10 @@ SHARED_APPS = [
 
 TENANT_APPS = [
     'django.contrib.contenttypes',
+    'django.contrib.auth',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.admin',
 
     # Apps de negócio (por tenant/schema)
     'apps.usuarios',
