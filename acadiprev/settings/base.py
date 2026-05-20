@@ -30,11 +30,9 @@ SHARED_APPS = [
     # Terceiros (compartilhados)
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'django_celery_beat',
     'django_celery_results',
-    'axes',
 ]
 
 TENANT_APPS = [
@@ -43,6 +41,10 @@ TENANT_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.admin',
+
+    # Terceiros (por tenant)
+    'rest_framework_simplejwt.token_blacklist',
+    'axes',
 
     # Apps de negócio (por tenant/schema)
     'apps.usuarios',
