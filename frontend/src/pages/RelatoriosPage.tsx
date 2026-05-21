@@ -18,7 +18,7 @@ export default function RelatoriosPage() {
 
   const exportarMutation = useMutation({
     mutationFn: (tipo: string) => relatorioApi.exportar({ tipo, formato: 'pdf' }).then(res => res.data),
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       alert(`Exportação iniciada. Task ID: ${data.task_id}`)
     }
   })

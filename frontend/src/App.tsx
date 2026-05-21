@@ -27,13 +27,13 @@ const queryClient = new QueryClient({
 })
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isAuthenticated = useAuthStore((s: any) => s.isAuthenticated)
   if (!isAuthenticated()) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
 function App() {
-  const setTenant = useAuthStore((s) => s.setTenant)
+  const setTenant = useAuthStore((s: any) => s.setTenant)
 
   useEffect(() => {
     // Carrega configuração do tenant (cor, logo) antes do login

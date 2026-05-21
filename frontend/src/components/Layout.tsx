@@ -83,7 +83,7 @@ export default function Layout() {
               key={item.to}
               to={item.to}
               id={`nav-${item.to.replace('/', '')}`}
-              style={({ isActive }) => ({
+              style={({ isActive }: { isActive: boolean }) => ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem',
