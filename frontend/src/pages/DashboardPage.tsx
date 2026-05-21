@@ -16,6 +16,7 @@ import {
   ArrowRight, Flame, Zap,
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+import TarefaModal from '../components/TarefaModal'
 
 // ============================================================
 // Tipos
@@ -536,6 +537,7 @@ function BarraProgressoDia() {
 export default function DashboardPage() {
   const usuario = useAuthStore((s: any) => s.usuario)
   const [_hoje] = useState(() => new Date().toISOString().split('T')[0])
+  const [showTarefaModal, setShowTarefaModal] = useState(false)
 
   // TODO: substituir mocks pelos endpoints reais:
   // const { data: agendaHoje } = useQuery({ queryKey: ['agendaHoje'], queryFn: () => agendaApi.hoje().then(r => r.data) })
@@ -559,7 +561,7 @@ export default function DashboardPage() {
             <Clock size={14} />
             Marcar ponto
           </button>
-          <button className="btn-primary" type="button">
+          <button className="btn-primary" type="button" onClick={() => setShowTarefaModal(true)}>
             <Plus size={14} />
             Nova tarefa
           </button>
@@ -586,6 +588,7 @@ export default function DashboardPage() {
       {/* ── Feed ── */}
       <FeedAtividades atividades={mockAtividades} />
 
+      {showTarefaModal && <TarefaModal onClose={() => setShowTarefaModal(false)} />}
     </div>
   )
 }

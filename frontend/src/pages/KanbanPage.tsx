@@ -7,17 +7,19 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus, Clock, AlertCircle, CheckCircle2, User } from 'lucide-react'
 import { tarefaApi } from '../api/endpoints'
 import { useAuthStore } from '../store/authStore'
+import TarefaModal from '../components/TarefaModal'
 
 export default function KanbanPage() {
   const { usuario } = useAuthStore()
   const [filtro, setFiltro] = useState('minhas') // minhas, bu (se líder)
+  const [showModal, setShowModal] = useState(false)
 
   const { data: tarefas = [], isLoading } = useQuery({
     queryKey: ['tarefas', filtro],
     queryFn: () => 
       filtro === 'bu' && usuario?.bu_id
-        ? tarefaApi.porBU(usuario.bu_id).then(res => res.data)
-        : tarefaApi.listar().then(res => res.data),
+        ? tarefaApi.porBU(usuario.bu_id).then(res => res.data.results || res.data)
+        : tarefaApi.listar().then(res => res.data.results || res.data),
   })
 
   // Agrupa tarefas por status
@@ -48,7 +50,7 @@ export default function KanbanPage() {
               <option value="bu">Tarefas da BU</option>
             </select>
           )}
-          <button className="btn-primary py-2" onClick={() => alert('Abrir modal criar tarefa')}>
+          <button className="btn-primary py-2" onClick={() => setShowModal(true)}>
             <Plus size={16} /> Nova Tarefa
           </button>
         </div>
@@ -60,6 +62,8 @@ export default function KanbanPage() {
         <ColunaKanban titulo="Em Andamento" tarefas={colunas.em_andamento} cor="blue" />
         <ColunaKanban titulo="Concluído" tarefas={colunas.concluido} cor="green" />
       </div>
+
+      {showModal && <TarefaModal onClose={() => setShowModal(false)} />}
     </div>
   )
 }

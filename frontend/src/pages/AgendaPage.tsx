@@ -9,10 +9,12 @@ import {
   CalendarCheck, CalendarX, Plus, FileText, Lock
 } from 'lucide-react'
 import { agendaApi, blocoApi } from '../api/endpoints'
+import ConcluirBlocoModal from '../components/ConcluirBlocoModal'
 
 export default function AgendaPage() {
   const queryClient = useQueryClient()
   const [hoje] = useState(() => new Date().toISOString().split('T')[0])
+  const [blocoConcluirId, setBlocoConcluirId] = useState<string | null>(null)
 
   // Fetch agenda do dia
   const { data, isLoading } = useQuery({
@@ -161,7 +163,7 @@ export default function AgendaPage() {
                     
                     {bloco.registro?.status === 'em_andamento' && (
                       <button
-                        onClick={() => alert('Abrir modal de conclusão')}
+                        onClick={() => setBlocoConcluirId(bloco.id)}
                         className="btn-primary px-3 py-1 text-xs"
                       >
                         <CheckCircle2 size={14} /> Concluir
@@ -180,6 +182,13 @@ export default function AgendaPage() {
           </div>
         )}
       </div>
+
+      {blocoConcluirId && (
+        <ConcluirBlocoModal
+          blocoId={blocoConcluirId}
+          onClose={() => setBlocoConcluirId(null)}
+        />
+      )}
     </div>
   )
 }
