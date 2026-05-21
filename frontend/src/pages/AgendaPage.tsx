@@ -5,14 +5,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
-  CheckCircle2, PlayCircle, Clock, 
+  CheckCircle2, PlayCircle, 
   CalendarCheck, CalendarX, Plus, FileText, Lock
 } from 'lucide-react'
 import { agendaApi, blocoApi } from '../api/endpoints'
-import { useAuthStore } from '../store/authStore'
 
 export default function AgendaPage() {
-  const { usuario } = useAuthStore()
   const queryClient = useQueryClient()
   const [hoje] = useState(() => new Date().toISOString().split('T')[0])
 

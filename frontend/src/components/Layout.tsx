@@ -4,15 +4,15 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import {
-  Calendar, LayoutKanban, BarChart2, Settings,
-  Bell, LogOut, Menu, X, Users, ChevronRight
+  Calendar, Kanban, BarChart2, Settings,
+  Bell, LogOut, Menu, X, Users
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api/endpoints'
 
 const NAV_ITEMS = [
   { to: '/agenda', icon: Calendar, label: 'Minha Agenda', perfis: ['colaborador', 'lider', 'rh', 'diretoria', 'admin'] },
-  { to: '/kanban', icon: LayoutKanban, label: 'Kanban', perfis: ['colaborador', 'lider', 'rh', 'diretoria', 'admin'] },
+  { to: '/kanban', icon: Kanban, label: 'Kanban', perfis: ['colaborador', 'lider', 'rh', 'diretoria', 'admin'] },
   { to: '/lider', icon: Users, label: 'Dashboard Líder', perfis: ['lider', 'admin'] },
   { to: '/relatorios', icon: BarChart2, label: 'Relatórios', perfis: ['rh', 'diretoria', 'admin'] },
   { to: '/admin', icon: Settings, label: 'Admin', perfis: ['admin'] },

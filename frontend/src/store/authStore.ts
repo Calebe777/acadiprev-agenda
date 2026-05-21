@@ -6,13 +6,13 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 interface Usuario {
-  id: string
+  id?: string
   nome: string
-  email: string
-  perfil: 'colaborador' | 'lider' | 'rh' | 'diretoria' | 'admin'
+  email?: string
+  perfil: 'colaborador' | 'lider' | 'rh' | 'diretoria' | 'admin' | string
   bu_id: string | null
-  schema_name: string
-  tenant_nome: string
+  schema_name?: string
+  tenant_nome?: string
 }
 
 interface TenantConfig {

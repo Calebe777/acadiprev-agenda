@@ -3,14 +3,13 @@
  * Mostra tarefas em A fazer, Em andamento e Concluído.
  */
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Plus, Clock, AlertCircle, CheckCircle2, User } from 'lucide-react'
 import { tarefaApi } from '../api/endpoints'
 import { useAuthStore } from '../store/authStore'
 
 export default function KanbanPage() {
   const { usuario } = useAuthStore()
-  const queryClient = useQueryClient()
   const [filtro, setFiltro] = useState('minhas') // minhas, bu (se líder)
 
   const { data: tarefas = [], isLoading } = useQuery({
