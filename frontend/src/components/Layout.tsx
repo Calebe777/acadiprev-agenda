@@ -1,197 +1,200 @@
 /**
- * Layout principal — Sidebar + topbar + Outlet.
+ * Layout principal - sidebar fixa estilo corporativo + header.
  */
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
 import {
-  Calendar, Kanban, BarChart2, Settings,
-  Bell, LogOut, Menu, X, Users
+  LayoutDashboard, Calendar, Kanban, BarChart2, Settings,
+  Bell, LogOut, Users, Search,
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { authApi } from '../api/endpoints'
+import ThemeToggle from './ThemeToggle'
 
-const NAV_ITEMS = [
-  { to: '/agenda', icon: Calendar, label: 'Minha Agenda', perfis: ['colaborador', 'lider', 'rh', 'diretoria', 'admin'] },
-  { to: '/kanban', icon: Kanban, label: 'Kanban', perfis: ['colaborador', 'lider', 'rh', 'diretoria', 'admin'] },
-  { to: '/lider', icon: Users, label: 'Dashboard Líder', perfis: ['lider', 'admin'] },
-  { to: '/relatorios', icon: BarChart2, label: 'Relatórios', perfis: ['rh', 'diretoria', 'admin'] },
-  { to: '/admin', icon: Settings, label: 'Admin', perfis: ['admin'] },
+type Perfil = 'colaborador' | 'lider' | 'rh' | 'diretoria' | 'admin'
+
+const NAV_ITEMS: Array<{
+  to: string
+  icon: typeof Calendar
+  label: string
+  perfis: Perfil[]
+}> = [
+  { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard',       perfis: ['colaborador','lider','rh','diretoria','admin'] },
+  { to: '/agenda',     icon: Calendar,        label: 'Minha Agenda',    perfis: ['colaborador','lider','rh','diretoria','admin'] },
+  { to: '/kanban',     icon: Kanban,          label: 'Kanban',          perfis: ['colaborador','lider','rh','diretoria','admin'] },
+  { to: '/lider',      icon: Users,           label: 'Dashboard Lider', perfis: ['lider','admin'] },
+  { to: '/relatorios', icon: BarChart2,       label: 'Relatorios',      perfis: ['rh','diretoria','admin'] },
+  { to: '/admin',      icon: Settings,        label: 'Admin',           perfis: ['admin'] },
 ]
 
+function initials(nome?: string): string {
+  if (!nome) return '?'
+  const parts = nome.trim().split(/\s+/)
+  const first = parts[0]?.[0] ?? ''
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : ''
+  return (first + last).toUpperCase() || '?'
+}
+
 export default function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const { usuario, tenant, logout, refreshToken } = useAuthStore()
+  const { usuario, tenant, logout, refreshToken } = useAuthStore() as any
   const navigate = useNavigate()
 
   const handleLogout = async () => {
-    try {
-      if (refreshToken) await authApi.logout(refreshToken)
-    } catch { /* ignora */ }
+    try { if (refreshToken) await authApi.logout(refreshToken) } catch { /* ignore */ }
     logout()
     navigate('/login')
   }
 
-  const filteredNav = NAV_ITEMS.filter(item =>
-    usuario?.perfil && item.perfis.includes(usuario.perfil)
+  const filteredNav = NAV_ITEMS.filter(
+    (item) => usuario?.perfil && item.perfis.includes(usuario.perfil as Perfil)
   )
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      {/* Sidebar */}
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--color-bg)' }}>
       <aside style={{
-        width: sidebarOpen ? '240px' : '64px',
-        transition: 'width 0.3s ease',
-        background: 'var(--color-surface-elevated)',
+        width: 248, flexShrink: 0,
+        background: 'var(--color-surface)',
         borderRight: '1px solid var(--color-border)',
-        display: 'flex',
-        flexDirection: 'column',
-        flexShrink: 0,
-        overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
       }}>
-        {/* Logo */}
         <div style={{
-          padding: '1.25rem',
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '18px 20px',
           borderBottom: '1px solid var(--color-border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          minHeight: '64px',
+          minHeight: 64,
         }}>
-          <div style={{
-            width: '36px', height: '36px', flexShrink: 0,
-            borderRadius: '10px',
-            background: `linear-gradient(135deg, var(--color-primary), var(--color-primary-light))`,
+          <div className="gradient-primary" style={{
+            width: 38, height: 38, borderRadius: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.1rem',
-          }}>📅</div>
-          {sidebarOpen && (
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-text)', whiteSpace: 'nowrap' }}>
-                Agenda H/H
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
-                {tenant?.nome}
-              </div>
+            color: '#fff', fontWeight: 700, fontSize: 14,
+            boxShadow: 'var(--shadow-sm)',
+          }}>AH</div>
+          <div style={{ overflow: 'hidden' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.2 }}>
+              Agenda Hora a Hora
             </div>
-          )}
+            <div style={{ fontSize: 11, color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
+              {tenant?.nome ?? 'Workspace'}
+            </div>
+          </div>
         </div>
 
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: '0.75rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <nav style={{ flex: 1, padding: 14, display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 600,
+            color: 'var(--color-text-muted)',
+            textTransform: 'uppercase', letterSpacing: '.08em',
+            padding: '4px 8px 8px',
+          }}>Menu</div>
           {filteredNav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               id={`nav-${item.to.replace('/', '')}`}
-              style={({ isActive }: { isActive: boolean }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.625rem 0.75rem',
-                borderRadius: '10px',
-                textDecoration: 'none',
-                transition: 'all 0.15s ease',
-                background: isActive ? `linear-gradient(135deg, var(--color-primary)33, var(--color-primary)22)` : 'transparent',
-                border: isActive ? `1px solid var(--color-primary)44` : '1px solid transparent',
-                color: isActive ? 'var(--color-text)' : 'var(--color-text-muted)',
-              })}
+              className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             >
               <item.icon size={18} style={{ flexShrink: 0 }} />
-              {sidebarOpen && (
-                <span style={{ fontSize: '0.875rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                  {item.label}
-                </span>
-              )}
+              <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>
             </NavLink>
           ))}
         </nav>
 
-        {/* User */}
-        <div style={{
-          padding: '0.75rem',
-          borderTop: '1px solid var(--color-border)',
-        }}>
-          {sidebarOpen && (
+        <div style={{ padding: 14, borderTop: '1px solid var(--color-border)' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '10px 12px',
+            background: 'var(--color-surface-muted)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius)',
+          }}>
             <div style={{
-              padding: '0.75rem',
-              borderRadius: '10px',
-              background: 'rgba(255,255,255,0.04)',
-              marginBottom: '0.5rem',
-            }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text)' }}>
-                {usuario?.nome}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'capitalize' }}>
-                {usuario?.perfil}
-              </div>
+              width: 36, height: 36, borderRadius: '50%',
+              background: 'var(--color-primary)',
+              color: '#fff', fontSize: 13, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>{initials(usuario?.nome)}</div>
+            <div style={{ overflow: 'hidden', flex: 1 }}>
+              <div style={{
+                fontSize: 13, fontWeight: 600, color: 'var(--color-text)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{usuario?.nome ?? 'Usuario'}</div>
+              <div style={{
+                fontSize: 11, color: 'var(--color-text-muted)',
+                textTransform: 'capitalize',
+              }}>{usuario?.perfil ?? '-'}</div>
             </div>
-          )}
-          <button
-            id="btn-logout"
-            onClick={handleLogout}
-            style={{
-              width: '100%',
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.5rem 0.75rem',
-              background: 'none', border: 'none',
-              color: 'var(--color-text-muted)',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '0.8rem',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-muted)')}
-          >
-            <LogOut size={16} />
-            {sidebarOpen && 'Sair'}
-          </button>
+            <button
+              id="btn-logout"
+              onClick={handleLogout}
+              title="Sair"
+              style={{
+                background: 'transparent', border: 'none',
+                color: 'var(--color-text-muted)',
+                cursor: 'pointer', display: 'flex',
+                padding: 6, borderRadius: 6,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--color-danger)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--color-text-muted)')}
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* Main */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Topbar */}
         <header style={{
-          height: '64px',
-          borderBottom: '1px solid var(--color-border)',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 1.5rem',
-          gap: '1rem',
+          height: 64, flexShrink: 0,
           background: 'var(--color-surface)',
-          flexShrink: 0,
+          borderBottom: '1px solid var(--color-border)',
+          display: 'flex', alignItems: 'center',
+          padding: '0 24px', gap: 16,
         }}>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex' }}
-          >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '8px 14px',
+            background: 'var(--color-surface-muted)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius)',
+            width: 360, maxWidth: '40vw',
+          }}>
+            <Search size={16} style={{ color: 'var(--color-text-muted)' }} />
+            <input
+              placeholder="Buscar tarefas, setores, pessoas..."
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                color: 'var(--color-text)', fontSize: 14,
+              }}
+            />
+          </div>
+
           <div style={{ flex: 1 }} />
-          <button
-            id="btn-notifications"
-            style={{
-              background: 'none', border: '1px solid var(--color-border)',
-              borderRadius: '8px', padding: '0.5rem',
-              color: 'var(--color-text-muted)', cursor: 'pointer', display: 'flex',
-              position: 'relative',
-            }}
-          >
+
+          <button id="btn-notifications" style={{
+            position: 'relative', width: 38, height: 38,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius)',
+            color: 'var(--color-text-secondary)',
+            cursor: 'pointer',
+          }}>
             <Bell size={18} />
             <span style={{
-              position: 'absolute', top: '-4px', right: '-4px',
-              width: '16px', height: '16px',
-              background: '#ef4444', borderRadius: '50%',
-              fontSize: '0.6rem', color: 'white',
+              position: 'absolute', top: -4, right: -4,
+              minWidth: 16, height: 16, padding: '0 4px',
+              background: 'var(--color-danger)',
+              color: '#fff', fontSize: 10, fontWeight: 700,
+              borderRadius: 999,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 700,
+              border: '2px solid var(--color-surface)',
             }}>3</span>
           </button>
+
+          <ThemeToggle />
         </header>
 
-        {/* Content */}
-        <main style={{ flex: 1, overflow: 'auto', padding: '1.5rem' }}>
+        <main style={{ flex: 1, overflow: 'auto', padding: 24, background: 'var(--color-bg)' }}>
           <Outlet />
         </main>
       </div>

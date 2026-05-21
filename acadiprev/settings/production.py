@@ -1,22 +1,41 @@
 """Settings de produção."""
+from decouple import config, Csv
+
 from .base import *  # noqa
 
 DEBUG = False
 
+# ============================================================
 # Segurança
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# USE_HTTPS=True ativa redirects/cookies seguros (atrás de TLS).
+# USE_HTTPS=False (default) permite acesso HTTP por IP em produção.
+# ============================================================
+USE_HTTPS = config('USE_HTTPS', default=False, cast=bool)
+
+SECURE_SSL_REDIRECT = USE_HTTPS
+SESSION_COOKIE_SECURE = USE_HTTPS
+CSRF_COOKIE_SECURE = USE_HTTPS
+
+SECURE_HSTS_SECONDS = 31536000 if USE_HTTPS else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = USE_HTTPS
+SECURE_HSTS_PRELOAD = USE_HTTPS
+
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Sentry
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if USE_HTTPS else None
+
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='',
+    cast=Csv(),
+)
+
+# ============================================================
+# Sentry (opcional)
+# ============================================================
 import sentry_sdk
-from decouple import config
 
 SENTRY_DSN = config('SENTRY_DSN', default='')
 if SENTRY_DSN:
@@ -26,7 +45,9 @@ if SENTRY_DSN:
         profiles_sample_rate=0.1,
     )
 
-# Logs para produção
+# ============================================================
+# Logs JSON em stdout (fácil de coletar)
+# ============================================================
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

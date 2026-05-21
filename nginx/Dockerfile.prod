@@ -1,0 +1,24 @@
+# ============================================================
+# nginx/Dockerfile.prod
+# Stage 1: build do frontend Vite com modo production
+# Stage 2: nginx servindo SPA + proxy para o Daphne (api:8000)
+# ============================================================
+
+# ---- Stage 1: build do frontend ----
+FROM node:20-alpine AS build-stage
+WORKDIR /app
+
+# Cache de deps
+COPY frontend/package*.json ./
+RUN npm ci --no-audit --no-fund
+
+# Código + build de produção
+COPY frontend/ ./
+RUN npm run build
+
+# ---- Stage 2: nginx ----
+FROM nginx:alpine
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY nginx/nginx.prod.conf /etc/nginx/nginx.conf
+
+EXPOSE 80

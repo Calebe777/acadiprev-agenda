@@ -4,9 +4,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
+# Argumentos de build (escolhem dev vs produção sem precisar de outro Dockerfile)
+ARG REQUIREMENTS=development
+ARG DJANGO_SETTINGS_MODULE=acadiprev.settings.development
+ENV DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
+
 WORKDIR /app
 
-# Install system dependencies
+# System deps (libpq + weasyprint + cairo/pango + utilitários úteis no boot)
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
@@ -16,17 +21,23 @@ RUN apt-get update && apt-get install -y \
     libgdk-pixbuf-xlib-2.0-0 \
     libffi-dev \
     shared-mime-info \
+    netcat-traditional \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements/base.txt requirements/base.txt
-COPY requirements/development.txt requirements/development.txt
-RUN pip install --no-cache-dir -r requirements/development.txt
+# Python deps
+COPY requirements/ requirements/
+RUN pip install --no-cache-dir -r requirements/${REQUIREMENTS}.txt
 
 COPY . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput --settings=acadiprev.settings.development || true
+# Torna o entrypoint executável se existir (não falha se não houver)
+RUN chmod +x /app/scripts/entrypoint.sh 2>/dev/null || true
+
+# Collect static usando o settings escolhido no build
+# (SECRET_KEY dummy para o collectstatic não falhar em build time)
+RUN SECRET_KEY=build-time-dummy ALLOWED_HOSTS=localhost \
+    python manage.py collectstatic --noinput || true
 
 EXPOSE 8000
 

@@ -1,0 +1,159 @@
+# ============================================================
+# docker-compose.prod.yml — Stack de produção (VPS)
+#
+# Diferenças em relação ao docker-compose.yml (dev):
+#   - Sem bind mount do código (imagem é imutável)
+#   - Sem portas internas expostas (db/redis/minio só na rede do compose)
+#   - DJANGO_SETTINGS_MODULE = production
+#   - Build com requirements/production.txt
+#   - api roda entrypoint que aguarda DB, migra schemas e sobe daphne
+#   - nginx publica na porta 80 do host (HTTP, conforme escolha do deploy)
+#   - Volumes nomeados para persistência (postgres, minio, static, media)
+# ============================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-${AWS_ACCESS_KEY_ID}}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-${AWS_SECRET_ACCESS_KEY}}
+    volumes:
+      - minio_data:/data
+    # MinIO Console acessível só localmente na VPS (porta 9001)
+    # tire o comentário se quiser acessar o painel via túnel SSH
+    # ports:
+    #   - "127.0.0.1:9001:9001"
+
+  # Cria o bucket no primeiro boot (idempotente)
+  minio_init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set local http://minio:9000 $${AWS_ACCESS_KEY_ID} $${AWS_SECRET_ACCESS_KEY};
+      mc mb --ignore-existing local/$${AWS_STORAGE_BUCKET_NAME};
+      mc anonymous set download local/$${AWS_STORAGE_BUCKET_NAME} || true;
+      echo 'MinIO bucket pronto.';
+      "
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME}
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        REQUIREMENTS: production
+        DJANGO_SETTINGS_MODULE: acadiprev.settings.production
+    image: acadiprev-api:prod
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: acadiprev.settings.production
+    command: ["/app/scripts/entrypoint.sh"]
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+      - jwt_keys:/app/keys:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8000"
+
+  celery_worker:
+    image: acadiprev-api:prod
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: acadiprev.settings.production
+    command: celery -A acadiprev worker -l info -c 4
+    volumes:
+      - media_files:/app/media
+      - jwt_keys:/app/keys:ro
+    depends_on:
+      api:
+        condition: service_started
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_beat:
+    image: acadiprev-api:prod
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DJANGO_SETTINGS_MODULE: acadiprev.settings.production
+    command: celery -A acadiprev beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - jwt_keys:/app/keys:ro
+    depends_on:
+      api:
+        condition: service_started
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile.prod
+    image: acadiprev-nginx:prod
+    restart: unless-stopped
+    volumes:
+      - static_files:/app/staticfiles:ro
+      - media_files:/app/media:ro
+    ports:
+      # Porta no HOST configurável via .env (HTTP_PORT), default 8090.
+      # Dentro do container o nginx sempre escuta na 80.
+      - "${HTTP_PORT:-8090}:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  static_files:
+  media_files:
+  jwt_keys:

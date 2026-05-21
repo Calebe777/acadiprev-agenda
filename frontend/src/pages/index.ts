@@ -1,4 +1,5 @@
 export { default as LoginPage } from './LoginPage'
+export { default as DashboardPage } from './DashboardPage'
 export { default as AgendaPage } from './AgendaPage'
 export { default as KanbanPage } from './KanbanPage'
 export { default as LiderDashboardPage } from './LiderDashboardPage'
