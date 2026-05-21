@@ -100,7 +100,7 @@ services:
     volumes:
       - static_files:/app/staticfiles:ro
     ports:
-      - "80:80"
+      - "18080:80"
     depends_on:
       - api
 
